@@ -10,7 +10,7 @@ import java.io.PrintWriter;
 /**
  * Servlet implementation class LoginServlet
  */
-@WebServlet(urlPatterns = "/login", name = "LoginServlet")
+//@WebServlet(urlPatterns = "/login", name = "LoginServlet")
 public class LoginServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 
