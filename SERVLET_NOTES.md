@@ -9,7 +9,10 @@
 6. [Session Management](#session-management)
 7. [Filters](#filters)
 8. [Exception Handling](#exception-handling)
-9. [Best Practices](#best-practices)
+9. [Internal Working of Servlet](#internal-working-of-servlet)
+10. [RequestDispatcher](#requestdispatcher)
+11. [Welcome Files and Resource Mapping](#welcome-files-and-resource-mapping)
+12. [Best Practices](#best-practices)
 
 ---
 
@@ -490,6 +493,358 @@ URI: <%= requestUri %>
 
 ---
 
+## Internal Working of Servlet
+
+### Overview
+The internal working of a servlet demonstrates how the server, servlet container, and user-defined servlets interact to process HTTP requests.
+
+### Key Components
+
+#### 1. **Client**
+- Initiates HTTP servlet requests to the server
+- Can be a web browser or any HTTP client
+
+#### 2. **Server**
+- Receives HTTP requests from the client
+- Creates a `ServletConfig` object for servlet configuration
+- Instantiates the servlet object (if not already created)
+- Calls the init() method with ServletConfig
+
+#### 3. **ServletConfig**
+- Contains initialization parameters and servlet configuration information
+- Passed to the servlet's init() method
+- Provides access to init parameters defined in web.xml
+
+#### 4. **Servlet Object**
+- The actual servlet instance created by the server
+- Inherits from GenericServlet or HttpServlet
+- Receives the ServletConfig during initialization
+- Handles service() calls for each request
+
+### Servlet Inheritance Hierarchy
+
+```
+java.lang.Object
+    ↓
+GenericServlet (implements ServletConfig, Serializable)
+    ↓
+HttpServlet (extends GenericServlet)
+    ↓
+UserServlet (Your custom servlet - extends HttpServlet)
+```
+
+**GenericServlet:**
+- Protocol-independent servlet
+- Implements init(ServletConfig) method
+- Defines abstract service() method
+
+**HttpServlet:**
+- Protocol-specific servlet for HTTP
+- Extends GenericServlet
+- Provides doGet(), doPost(), doPut(), doDelete() methods
+- Implements service() method to route to appropriate HTTP method
+
+**UserServlet:**
+- Your custom servlet implementation
+- Extends HttpServlet
+- Overrides doGet(), doPost(), etc. as needed
+
+### Internal Working Flow
+
+```
+1. Client sends HTTP request to Server
+2. Server receives the request
+3. Server creates ServletConfig object containing:
+   - Servlet name
+   - Init parameters from web.xml
+   - ServletContext reference
+4. Server checks if servlet instance exists
+   - If not exists: Create servlet instance using no-arg constructor
+   - If exists: Use existing instance
+5. Server calls init(ServletConfig config) method
+   - Called only once
+   - Servlet initializes resources
+6. Server calls service() method for each request
+   - service() method routes to appropriate HTTP method:
+     - GET request → doGet()
+     - POST request → doPost()
+     - PUT request → doPut()
+     - DELETE request → doDelete()
+   - User-defined logic processes the request
+7. Servlet generates response
+8. Response is sent back to client
+9. When server shuts down:
+   - Server calls destroy() method
+   - Servlet cleans up resources
+   - Servlet instance is removed
+```
+
+### Code Example
+
+```java
+// Custom Servlet extending HttpServlet
+public class UserServlet extends HttpServlet {
+    private ServletConfig config;
+    
+    @Override
+    public void init(ServletConfig config) throws ServletException {
+        super.init(config);
+        this.config = config;
+        // Initialize resources
+        System.out.println("UserServlet initialized");
+    }
+    
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        response.setContentType("text/html");
+        PrintWriter out = response.getWriter();
+        
+        String servletName = config.getServletName();
+        out.println("<h1>Servlet: " + servletName + "</h1>");
+    }
+    
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        // Handle POST requests
+    }
+    
+    @Override
+    public void destroy() {
+        System.out.println("UserServlet destroyed");
+        // Cleanup resources
+    }
+}
+```
+
+### Important Points
+
+1. **Single Instance**: Only one instance of each servlet is created
+2. **Thread Safety**: Multiple threads can execute service() simultaneously on the same servlet instance
+3. **ServletConfig**: Created by the server, contains configuration for the servlet
+4. **Initialization**: init() is called only once, before any service() calls
+5. **Service Method**: Called for every request received by the servlet
+6. **Cleanup**: destroy() is called once when servlet is removed
+
+---
+
+## RequestDispatcher
+
+### What is RequestDispatcher?
+RequestDispatcher is responsible for dispatching the request to another resource. It may dispatch the request to an HTML file, servlet, or JSP page.
+
+### RequestDispatcher Methods
+
+There are two methods defined in the RequestDispatcher interface:
+
+#### 1. **forward() method**
+- Forwards a request from one servlet to another resource (servlet, JSP, or HTML).
+- The request and response objects are passed to the target resource.
+- The client receives the response from the target resource, not the forwarding servlet.
+- **Important**: Response headers and status code cannot be modified after forward() is called.
+
+```java
+public void doGet(HttpServletRequest request, HttpServletResponse response) 
+    throws ServletException, IOException {
+    
+    // Forward to another servlet or JSP
+    RequestDispatcher dispatcher = request.getRequestDispatcher("/nextServlet");
+    dispatcher.forward(request, response);
+}
+```
+
+**forward() Flow:**
+```
+1) Client sends request to Servlet1
+2) Servlet1 forwards request to Servlet2 using forward()
+3) Servlet2 processes request and generates response
+4) Response is sent back to client
+5) Client only sees response from Servlet2
+```
+
+#### 2. **include() method**
+- Includes the response of another resource within the current response.
+- The response from the target resource is included in the response of the current servlet.
+- Both resources contribute to the final response.
+- Used to include headers, footers, or common content.
+
+```java
+public void doGet(HttpServletRequest request, HttpServletResponse response) 
+    throws ServletException, IOException {
+    
+    response.setContentType("text/html");
+    PrintWriter out = response.getWriter();
+    
+    out.println("<h1>Header</h1>");
+    
+    // Include response from another servlet
+    RequestDispatcher dispatcher = request.getRequestDispatcher("/headerServlet");
+    dispatcher.include(request, response);
+    
+    out.println("<h1>Footer</h1>");
+}
+```
+
+**include() Flow:**
+```
+1) Client sends request to Servlet1
+2) Servlet1 generates some content
+3) Servlet1 includes response from Servlet2 using include()
+4) Servlet2 response is included in Servlet1 response
+5) Servlet1 generates remaining content
+6) Final combined response is sent to client
+```
+
+### Getting RequestDispatcher
+
+```java
+// Method 1: Using path
+RequestDispatcher dispatcher = request.getRequestDispatcher("/path/to/resource");
+
+// Method 2: Using servlet name
+RequestDispatcher dispatcher = request.getRequestDispatcher("/servletName");
+
+// Method 3: Using ServletContext
+ServletContext context = getServletContext();
+RequestDispatcher dispatcher = context.getRequestDispatcher("/resource");
+
+// Method 4: Named dispatcher
+ServletContext context = getServletContext();
+RequestDispatcher dispatcher = context.getNamedDispatcher("servletName");
+```
+
+### Code Example: forward()
+```java
+@WebServlet("/login")
+public class LoginServlet extends HttpServlet {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) 
+        throws ServletException, IOException {
+        
+        String username = request.getParameter("username");
+        String password = request.getParameter("password");
+        
+        // Validate credentials
+        if (isValidUser(username, password)) {
+            request.setAttribute("user", username);
+            // Forward to dashboard
+            RequestDispatcher dispatcher = request.getRequestDispatcher("/dashboard");
+            dispatcher.forward(request, response);
+        } else {
+            // Forward to login error page
+            request.setAttribute("error", "Invalid credentials");
+            RequestDispatcher dispatcher = request.getRequestDispatcher("/loginError.jsp");
+            dispatcher.forward(request, response);
+        }
+    }
+}
+```
+
+### Code Example: include()
+```java
+@WebServlet("/page")
+public class PageServlet extends HttpServlet {
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) 
+        throws ServletException, IOException {
+        
+        response.setContentType("text/html");
+        PrintWriter out = response.getWriter();
+        
+        // Include header
+        RequestDispatcher header = request.getRequestDispatcher("/header");
+        header.include(request, response);
+        
+        // Main content
+        out.println("<div class='content'>");
+        out.println("<h1>Main Page Content</h1>");
+        out.println("</div>");
+        
+        // Include footer
+        RequestDispatcher footer = request.getRequestDispatcher("/footer");
+        footer.include(request, response);
+    }
+}
+```
+
+### forward() vs include() Comparison
+
+| Feature | forward() | include() |
+|---------|-----------|-----------|
+| **Purpose** | Transfer control to another resource | Include response from another resource |
+| **Response Contribution** | Only target resource contributes | Both current and target resource contribute |
+| **Request/Response Passing** | Same request and response objects | Same request and response objects |
+| **URL in Browser** | Remains same as forwarding servlet | Remains same as current servlet |
+| **Use Case** | Navigation, conditional routing | Headers, footers, common content |
+| **Response Headers** | Can be set before forward | Can be set in included resource |
+
+---
+
+## Welcome Files and Resource Mapping
+
+### What are Welcome Files?
+Welcome files are the default resources served when a directory is requested without specifying a file name.
+
+When a user accesses `www.example.com` or `www.example.com/`, the server automatically looks for welcome files in the configured list and serves the first match found.
+
+### Configuring Welcome Files in web.xml
+```xml
+<welcome-file-list>
+    <welcome-file>home.jsp</welcome-file>
+    <welcome-file>index.html</welcome-file>
+    <welcome-file>index.jsp</welcome-file>
+</welcome-file-list>
+```
+
+**Order Matters**: The files are searched in the order they are specified.
+
+### Welcome Files Example
+If the welcome-file-list is configured as shown above:
+1. User visits: `www.onlyjavatecgh.com`
+2. Server looks for `home.jsp` → if found, serves it
+3. If not found, looks for `index.html` → if found, serves it
+4. If not found, looks for `index.jsp` → if found, serves it
+5. If none found, returns directory listing or 404 error
+
+### Welcome Files Server-Side Processing
+
+```
+Client Request:
+    ↓
+www.onlyjavatecgh.com
+    ↓
+Server receives request for root directory
+    ↓
+Checks welcome-file-list in order
+    ↓
+Request is internally forwarded to home.jsp
+    ↓
+home.jsp processes the request
+    ↓
+Response is sent back to client
+```
+
+### Practical Scenario
+
+**web.xml Configuration:**
+```xml
+<welcome-file-list>
+    <welcome-file>home.jsp</welcome-file>
+    <welcome-file>index.html</welcome-file>
+    <welcome-file>index.jsp</welcome-file>
+</welcome-file-list>
+```
+
+**Available Resources on Server:**
+- `/home.jsp` - exists
+- `/index.html` - exists
+- `/index.jsp` - exists
+
+**Request Handling:**
+- `http://www.onlyjavatecgh.com` → Serves `home.jsp` (first in list)
+- Response contains content from `home.jsp`
+
+---
+
 ## Best Practices
 
 ### 1. **Security**
@@ -594,6 +949,9 @@ Servlets are fundamental to Java web development. Key points:
 - **Request/Response Handling**: Use HttpServletRequest and HttpServletResponse
 - **Session Management**: Use HttpSession for stateful applications
 - **Filters**: Intercept requests for cross-cutting concerns
+- **Internal Working**: Understand how servlets are created, initialized, and destroyed
+- **RequestDispatcher**: Forward or include requests to other resources
+- **Welcome Files**: Configure default resources for directory requests
 - **Best Practices**: Security, performance, scalability, and code quality matter
 
 For modern applications, consider using frameworks like Spring, Quarkus, or Jakarta EE which simplify servlet development.
