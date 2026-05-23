@@ -1,5 +1,6 @@
 package com.practice;
 
+import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -37,11 +38,28 @@ public class RegisterServlet extends HttpServlet {
 				out.println("<p><strong>Gender:</strong> " + gender + "</p>");
 				out.println("<p><strong>Course:</strong> " + course + "</p>");
 				out.println("</body></html>");
-			}
 
+				// JDBC
+
+				// Save to DB
+
+				RequestDispatcher dispatcher = request.getRequestDispatcher("Success");
+				dispatcher.forward(request, response);
+			} else {
+				out.println("<p><strong> You have not accepted terms and conditions.");
+			}
 		} else {
 			out.println("<p><strong> You have not accepted terms and conditions.");
+
+			// I want to include output to index.html
+
+			// get the object of RequestDispatcher
+
+			RequestDispatcher dispatcher = request.getRequestDispatcher("index.html");
+
+			dispatcher.include(request, response);
 		}
+
 	}
 
 }
