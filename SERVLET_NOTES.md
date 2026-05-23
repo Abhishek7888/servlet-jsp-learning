@@ -7,14 +7,15 @@
 4. [Request and Response](#request-and-response)
 5. [Servlet Configuration](#servlet-configuration)
 6. [Session Management](#session-management)
-7. [Filters](#filters)
-8. [Exception Handling](#exception-handling)
-9. [Internal Working of Servlet](#internal-working-of-servlet)
-10. [Deployment Descriptor](#deployment-descriptor)
-11. [Parameters and Attributes in Servlet](#parameters-and-attributes-in-servlet)
-12. [RequestDispatcher](#requestdispatcher)
-13. [Welcome Files and Resource Mapping](#welcome-files-and-resource-mapping)
-14. [Best Practices](#best-practices)
+7. [Session Tracking in Servlet](#session-tracking-in-servlet)
+8. [Filters](#filters)
+9. [Exception Handling](#exception-handling)
+10. [Internal Working of Servlet](#internal-working-of-servlet)
+11. [Deployment Descriptor](#deployment-descriptor)
+12. [Parameters and Attributes in Servlet](#parameters-and-attributes-in-servlet)
+13. [RequestDispatcher](#requestdispatcher)
+14. [Welcome Files and Resource Mapping](#welcome-files-and-resource-mapping)
+15. [Best Practices](#best-practices)
 
 ---
 
@@ -364,6 +365,246 @@ public void doGet(HttpServletRequest request, HttpServletResponse response)
     <tracking-mode>COOKIE</tracking-mode>
     <timeout>30</timeout>  <!-- in minutes -->
 </session-config>
+```
+
+---
+
+## Session Tracking in Servlet
+
+### What is Session Tracking?
+
+**Session Tracking** is a way to maintain state (data) of a user. It is also known as **State Management**.
+
+- Enables servlets to recognize returning users
+- Maintains user-specific data across multiple requests
+- Essential for e-commerce, authentication, and personalized experiences
+- Allows sharing of user information between different servlets
+
+### Session Tracking Flow
+
+```
+HTTP (Stateless)
+    ↓
+    ├─ Browser sends request with session ID
+    │
+    ├─ Server recognizes returning user
+    │
+    └─ Each request identified as new request
+        with new session ID
+```
+
+The server-side mechanism:
+1. **First Request**: Client makes a request → Browser creates new session
+2. **Server Processing**: Server creates session object for the user
+3. **Session Persistence**: Server stores session data with unique ID
+4. **Subsequent Requests**: Client sends session ID with each request
+5. **Data Retrieval**: Server retrieves session data using session ID
+
+---
+
+### Session Tracking Techniques
+
+There are **four techniques** used in Session Tracking:
+
+#### 1. **Cookies**
+- Session ID stored in browser cookie
+- Automatically sent with each request
+- Most common and default method
+- Works seamlessly with HttpSession API
+
+```java
+// Setting a cookie
+Cookie sessionCookie = new Cookie("JSESSIONID", "ABC123XYZ");
+sessionCookie.setMaxAge(1800);  // 30 minutes
+response.addCookie(sessionCookie);
+
+// Retrieving cookies
+Cookie[] cookies = request.getCookies();
+for (Cookie cookie : cookies) {
+    if ("JSESSIONID".equals(cookie.getName())) {
+        String sessionId = cookie.getValue();
+    }
+}
+```
+
+**Advantages:**
+- Simple and automatic
+- Works with HttpSession
+- Widely supported
+
+**Disadvantages:**
+- Can be disabled in browser
+- User can delete cookies
+- Storage limitations
+
+#### 2. **Hidden Form Field**
+- Session ID passed as hidden form field
+- Embedded in HTML form
+- Manual management required
+- Alternative when cookies disabled
+
+```html
+<!-- HTML Form with hidden field -->
+<form method="POST" action="/nextServlet">
+    <input type="hidden" name="jsessionid" value="ABC123XYZ">
+    <input type="text" name="username">
+    <input type="submit">
+</form>
+```
+
+```java
+// Retrieving session ID from hidden field
+String sessionId = request.getParameter("jsessionid");
+```
+
+**Advantages:**
+- Works without browser cookie support
+- User-controlled submission
+
+**Disadvantages:**
+- Manual implementation required
+- Manual form creation needed
+- More complex code
+
+#### 3. **URL Rewriting**
+- Session ID appended to URL as query parameter
+- Automatic by container with encodeRedirectURL()
+- Used when cookies disabled
+- Alternative to cookies
+
+```java
+// URL rewriting example
+String url = response.encodeRedirectURL("/nextpage", sessionId);
+response.sendRedirect(url);
+
+// Result: /nextpage;jsessionid=ABC123XYZ
+```
+
+```java
+// Retrieving session ID from URL
+String sessionId = request.getRequestedSessionId();
+```
+
+**Advantages:**
+- Works without cookies
+- No user action needed
+- Container-managed
+
+**Disadvantages:**
+- Visible in URL (security concern)
+- Not bookmarkable
+- Longer URLs
+
+#### 4. **HttpSession (Recommended)**
+- Server-side session management
+- Automatic by servlet container
+- Object-oriented approach
+- Most secure and convenient
+
+```java
+// Create/get session
+HttpSession session = request.getSession();
+String sessionId = session.getId();
+
+// Store data
+session.setAttribute("username", "john");
+
+// Retrieve data
+String username = (String) session.getAttribute("username");
+
+// Remove data
+session.removeAttribute("username");
+
+// Invalidate session
+session.invalidate();
+```
+
+**Advantages:**
+- Automatic by container
+- Secure (server-side storage)
+- Easy to use
+- Object-oriented
+- Can store any Java object
+
+**Disadvantages:**
+- Requires server resources
+- Not suitable for distributed systems without replication
+
+---
+
+### Session Tracking Comparison Table
+
+| Technique | Method | Persistence | Security | Complexity | Use Case |
+|-----------|--------|-------------|----------|-----------|----------|
+| **Cookies** | Client-side | Browser | Medium | Low | Default, recommended |
+| **Hidden Field** | Client-side | Form submission only | Medium | Medium | Alternative to cookies |
+| **URL Rewriting** | Client-side | URL parameter | Low | Low | Fallback when cookies disabled |
+| **HttpSession** | Server-side | Server memory | High | Low | Enterprise, secure apps |
+
+---
+
+### Practical Example
+
+```java
+// First Servlet - Set session data
+@WebServlet("/login")
+public class LoginServlet extends HttpServlet {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) 
+        throws ServletException, IOException {
+        
+        String username = request.getParameter("username");
+        String password = request.getParameter("password");
+        
+        // Validate user
+        if (isValidUser(username, password)) {
+            // Get/create session
+            HttpSession session = request.getSession();
+            
+            // Store user data in session
+            session.setAttribute("username", username);
+            session.setAttribute("loginTime", new Date());
+            session.setAttribute("role", getUserRole(username));
+            
+            // Set session timeout (30 minutes)
+            session.setMaxInactiveInterval(1800);
+            
+            // Redirect to dashboard
+            response.sendRedirect("/dashboard");
+        } else {
+            request.setAttribute("error", "Invalid credentials");
+            request.getRequestDispatcher("/login.jsp").forward(request, response);
+        }
+    }
+}
+
+// Second Servlet - Retrieve session data
+@WebServlet("/dashboard")
+public class DashboardServlet extends HttpServlet {
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) 
+        throws ServletException, IOException {
+        
+        // Get session (don't create new)
+        HttpSession session = request.getSession(false);
+        
+        if (session == null) {
+            // No session, redirect to login
+            response.sendRedirect("/login.jsp");
+            return;
+        }
+        
+        // Retrieve session data
+        String username = (String) session.getAttribute("username");
+        Date loginTime = (Date) session.getAttribute("loginTime");
+        String role = (String) session.getAttribute("role");
+        
+        // Use session data
+        response.setContentType("text/html");
+        PrintWriter out = response.getWriter();
+        out.println("<h1>Welcome, " + username + "!</h1>");
+        out.println("<p>Logged in at: " + loginTime + "</p>");
+        out.println("<p>Role: " + role + "</p>");
+    }
+}
 ```
 
 ---
@@ -1233,6 +1474,7 @@ Servlets are fundamental to Java web development. Key points:
 - **Thread-Safe Code**: Write thread-safe servlet methods
 - **Request/Response Handling**: Use HttpServletRequest and HttpServletResponse
 - **Session Management**: Use HttpSession for stateful applications
+- **Session Tracking**: Multiple techniques to maintain user state (Cookies, Hidden Fields, URL Rewriting, HttpSession)
 - **Filters**: Intercept requests for cross-cutting concerns
 - **Internal Working**: Understand how servlets are created, initialized, and destroyed
 - **Deployment Descriptor**: web.xml configures your web application
