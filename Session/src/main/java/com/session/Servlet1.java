@@ -3,6 +3,7 @@ package com.session;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -33,6 +34,11 @@ public class Servlet1 extends HttpServlet {
 			String name = request.getParameter("name");
 			out.println("<h1> Hello , " + name + " Welcome to Website...<h1/>");
 			out.println("<a href = 'Servlet2'>Go to Serlvet 2 <a/></h1>");
+			
+			//Create a Cookie
+			
+			Cookie cookie = new Cookie("user_name", name);
+			response.addCookie(cookie);
 			out.println("</body></html>");
 		}
 	}
