@@ -10,9 +10,11 @@
 7. [Filters](#filters)
 8. [Exception Handling](#exception-handling)
 9. [Internal Working of Servlet](#internal-working-of-servlet)
-10. [RequestDispatcher](#requestdispatcher)
-11. [Welcome Files and Resource Mapping](#welcome-files-and-resource-mapping)
-12. [Best Practices](#best-practices)
+10. [Deployment Descriptor](#deployment-descriptor)
+11. [Parameters and Attributes in Servlet](#parameters-and-attributes-in-servlet)
+12. [RequestDispatcher](#requestdispatcher)
+13. [Welcome Files and Resource Mapping](#welcome-files-and-resource-mapping)
+14. [Best Practices](#best-practices)
 
 ---
 
@@ -629,6 +631,289 @@ public class UserServlet extends HttpServlet {
 
 ---
 
+## Deployment Descriptor
+
+### What is web.xml (Deployment Descriptor)?
+- **File that contains configuration of your Java web application.**
+- **It resides in the WEB-INF folder.**
+- Also known as the deployment descriptor
+- Defines how the web application is deployed and configured
+
+### Structure and Location
+
+The `web.xml` file is located in the `WEB-INF` folder of your web application:
+
+```
+YourWebApp/
+├── WEB-INF/
+│   ├── web.xml          ← Deployment Descriptor
+│   ├── classes/
+│   └── lib/
+└── [your JSP and HTML files]
+```
+
+### Contents of web.xml
+
+The `<web-app>` element contains all configuration for your web application:
+
+```xml
+<web-app>
+    <!-- Servlet Declaration -->
+    <servlet>
+        <servlet-name>...</servlet-name>
+        <servlet-class>...</servlet-class>
+    </servlet>
+    
+    <!-- Servlet Mapping -->
+    <servlet-mapping>
+        <servlet-name>...</servlet-name>
+        <url-pattern>...</url-pattern>
+    </servlet-mapping>
+    
+    <!-- Initialization Parameters -->
+    <init-param>
+        <param-name>...</param-name>
+        <param-value>...</param-value>
+    </init-param>
+    
+    <!-- Welcome File Configuration -->
+    <welcome-file-list>
+        <welcome-file>...</welcome-file>
+    </welcome-file-list>
+    
+    <!-- Filters -->
+    <filter>
+        <filter-name>...</filter-name>
+        <filter-class>...</filter-class>
+    </filter>
+    
+    <!-- Listeners -->
+    <listener>
+        <listener-class>...</listener-class>
+    </listener>
+    
+    <!-- Session Configuration -->
+    <session-config>
+        ...
+    </session-config>
+    
+    <!-- And many more configurations... -->
+</web-app>
+```
+
+### Main Configuration Elements
+
+1. **Servlet Declaration** - Defines servlets used in the application
+2. **Servlet Mapping** - Maps URL patterns to servlets
+3. **Initialization Parameters** - Pass configuration values to servlets
+4. **Welcome Files** - Default files served for directory requests
+5. **Filters** - Request/response interceptors
+6. **Listeners** - Event listeners for application lifecycle
+7. **Session Configuration** - Session timeout and cookie settings
+8. **Error Pages** - Error handling configuration
+
+### Example web.xml Configuration
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="http://xmlns.jcp.org/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee
+         http://xmlns.jcp.org/xml/ns/javaee/web-app_4_0.xsd"
+         version="4.0">
+
+    <display-name>My Web Application</display-name>
+    
+    <!-- Servlet Configuration -->
+    <servlet>
+        <servlet-name>HelloServlet</servlet-name>
+        <servlet-class>com.example.HelloServlet</servlet-class>
+        <init-param>
+            <param-name>author</param-name>
+            <param-value>John Doe</param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    
+    <!-- Servlet Mapping -->
+    <servlet-mapping>
+        <servlet-name>HelloServlet</servlet-name>
+        <url-pattern>/hello</url-pattern>
+    </servlet-mapping>
+    
+    <!-- Welcome Files -->
+    <welcome-file-list>
+        <welcome-file>index.html</welcome-file>
+        <welcome-file>index.jsp</welcome-file>
+    </welcome-file-list>
+
+</web-app>
+```
+
+---
+
+## Parameters and Attributes in Servlet
+
+### Understanding Parameters
+
+#### What are Parameters?
+- **Parameters are values provided by the user to any servlet to process the request during the request operation.**
+- Servlet only **reads** that value for request processing
+- Parameters mostly come from **HTML forms** and **initialization parameters** (defined in web.xml)
+- They are **user-provided data**
+
+#### How to Get Parameters
+
+```java
+// Get single parameter value
+String name = request.getParameter("name_of_your_parameter");
+
+// Example from HTML form with course=java
+String course = request.getParameter("course");
+
+// Now process your request using the parameter value
+```
+
+#### Parameter Sources
+
+1. **HTML Form Parameters** (User Input)
+   ```html
+   <form method="GET" action="/myservlet">
+       <input type="text" name="username">
+       <input type="password" name="password">
+       <input type="submit">
+   </form>
+   ```
+   
+2. **Query String Parameters**
+   - `http://example.com/servlet?name=John&course=Java`
+
+3. **Initialization Parameters** (web.xml)
+   ```xml
+   <init-param>
+       <param-name>database.url</param-name>
+       <param-value>jdbc:mysql://localhost:3306/mydb</param-value>
+   </init-param>
+   ```
+
+#### Example Usage
+
+```java
+public class LoginServlet extends HttpServlet {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) 
+        throws ServletException, IOException {
+        
+        // Get parameters from form
+        String username = request.getParameter("username");
+        String password = request.getParameter("password");
+        String course = request.getParameter("course");  // e.g., "java"
+        
+        // Process the request using these parameters
+        if (isValidUser(username, password)) {
+            // Process login
+        }
+    }
+}
+```
+
+---
+
+### Understanding Attributes
+
+#### What are Attributes?
+- **Attributes are objects that are attached by one servlet to an object (session, request, config, context, etc.)**
+- **Other servlets can fetch that object to process to logic**
+- Attributes are **mutable** - servlets can easily **modify, add, and remove** the content of attributes when required
+- They are **server-side data** shared between servlets
+
+#### Attribute Operations
+
+You can perform these operations with attributes:
+
+1. **setAttribute(String name, String value)** - Store an attribute
+2. **Object value = getAttribute(String name)** - Retrieve an attribute
+3. **removeAttribute(String name)** - Remove an attribute
+
+#### Example Usage
+
+```java
+// Servlet 1: Set an attribute
+public class FirstServlet extends HttpServlet {
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) 
+        throws ServletException, IOException {
+        
+        // Create an attribute
+        String userData = "Important data from FirstServlet";
+        
+        // Set attribute in request object
+        request.setAttribute("userInfo", userData);
+        
+        // Forward to another servlet
+        RequestDispatcher dispatcher = request.getRequestDispatcher("/secondServlet");
+        dispatcher.forward(request, response);
+    }
+}
+
+// Servlet 2: Retrieve and use the attribute
+public class SecondServlet extends HttpServlet {
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) 
+        throws ServletException, IOException {
+        
+        // Get the attribute set by FirstServlet
+        String userInfo = (String) request.getAttribute("userInfo");
+        
+        // Use the attribute in business logic
+        System.out.println("Received: " + userInfo);
+        
+        response.setContentType("text/html");
+        PrintWriter out = response.getWriter();
+        out.println("<h1>User Info: " + userInfo + "</h1>");
+    }
+}
+```
+
+### Parameters vs Attributes Comparison
+
+| Feature | Parameters | Attributes |
+|---------|-----------|-----------|
+| **Source** | User-provided (form, URL, init-param) | Server-side, set by servlets |
+| **Type** | String values | Any Java Object |
+| **Read/Write** | Read-only (by servlet) | Read, Write, Modify, Remove |
+| **Scope** | Request-specific | Request, Session, ServletContext |
+| **Purpose** | Input from user | Data sharing between servlets |
+| **Persistence** | Single request | Multiple requests (if session/context) |
+| **Example** | Form data, query string | User object, cached data |
+
+#### Attribute Scopes
+
+1. **Request Scope**
+   ```java
+   request.setAttribute("key", value);
+   Object obj = request.getAttribute("key");
+   ```
+   - Available only for current request
+   - Lost after response sent
+
+2. **Session Scope**
+   ```java
+   HttpSession session = request.getSession();
+   session.setAttribute("key", value);
+   Object obj = session.getAttribute("key");
+   ```
+   - Available across multiple requests from same user
+   - Lost when session expires
+
+3. **ServletContext Scope**
+   ```java
+   ServletContext context = getServletContext();
+   context.setAttribute("key", value);
+   Object obj = context.getAttribute("key");
+   ```
+   - Available to all servlets in the application
+   - Lost when application stops
+
+---
+
 ## RequestDispatcher
 
 ### What is RequestDispatcher?
@@ -950,6 +1235,8 @@ Servlets are fundamental to Java web development. Key points:
 - **Session Management**: Use HttpSession for stateful applications
 - **Filters**: Intercept requests for cross-cutting concerns
 - **Internal Working**: Understand how servlets are created, initialized, and destroyed
+- **Deployment Descriptor**: web.xml configures your web application
+- **Parameters and Attributes**: Use parameters for user input and attributes for server-side data sharing
 - **RequestDispatcher**: Forward or include requests to other resources
 - **Welcome Files**: Configure default resources for directory requests
 - **Best Practices**: Security, performance, scalability, and code quality matter
