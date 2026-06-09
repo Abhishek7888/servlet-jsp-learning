@@ -1,4 +1,5 @@
 <%@page import="java.util.*"%>
+<%@ taglib uri="/WEB-INF/tlds/mytags.tld" prefix="t"%>
 
 <!DOCTYPE html>
 <html>
@@ -6,7 +7,7 @@
 <meta charset="UTF-8">
 <title>JSP Tags</title>
 <style type="text/css">
-* { 
+* {
 	margin: 0px;
 	padding: 0px;
 }
@@ -53,5 +54,8 @@
 		<%=n%>
 	</h1>
 	<a href="jstl.jsp">GO for Taglib Directive</a>
+
+	<t:hello />
+	<t:printTable number="5"/>
 </body>
 </html>
