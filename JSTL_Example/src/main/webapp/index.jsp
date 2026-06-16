@@ -42,14 +42,14 @@
 		</h3>
 	</c:forEach>
 
-	<!--	<c:redirect url="https://www.google.com"></c:redirect>-->
-
+	<!--	<c:redirect url="https://www.google.com"></c:redirect>
 	<c:url var="myurl" value="www.google.com/search">
 		<c:param name="q" value="This is test page"></c:param>
 	</c:url>
 
 	<h1>
 		<c:out value="${myurl }"></c:out>
-	</h1>
+	</h1>-->
+	
 </body>
 </html>
