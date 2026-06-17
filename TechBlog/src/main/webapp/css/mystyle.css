@@ -1,3 +1,5 @@
 @charset "UTF-8";
-body {
-	}
+
+.primary-background {
+	background: #7e57c2!important;
+}
