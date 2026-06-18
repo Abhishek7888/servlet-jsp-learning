@@ -1,5 +1,6 @@
-package com.tech.bolg.entities;
+package com.tech.blog.entities;
 
+import java.sql.Date;
 import java.sql.Timestamp;
 
 public class User {
@@ -10,10 +11,31 @@ public class User {
 	private String password;
 	private String gender;
 	private String about;
-	private Timestamp registration_date;
+	private Date registration_date;
+	private String profile;
+
+	public User(String name, String email, String password, String gender, String about, Date registration_date,
+			String profile) {
+		super();
+		this.name = name;
+		this.email = email;
+		this.password = password;
+		this.gender = gender;
+		this.about = about;
+		this.registration_date = registration_date;
+		this.profile = profile;
+	}
+
+	public String getProfile() {
+		return profile;
+	}
+
+	public void setProfile(String profile) {
+		this.profile = profile;
+	}
 
 	public User(int id, String name, String email, String password, String gender, String about,
-			Timestamp registration_date) {
+			Date registration_date) {
 		super();
 		this.id = id;
 		this.name = name;
@@ -82,11 +104,11 @@ public class User {
 		this.about = about;
 	}
 
-	public Timestamp getRegistration_date() {
+	public Date getRegistration_date() {
 		return registration_date;
 	}
 
-	public void setRegistration_date(Timestamp registration_date) {
+	public void setRegistration_date(Date registration_date) {
 		this.registration_date = registration_date;
 	}
 
