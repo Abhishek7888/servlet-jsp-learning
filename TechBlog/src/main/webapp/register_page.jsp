@@ -44,9 +44,11 @@
 										id="exampleInputPassword1" name="user_password">
 								</div>
 								<div class="form-group">
-									<label for="gender">Gender</label> <br> <input
-										type="radio" id="gender" name="user_gender">Male <input
-										type="radio" id="gender" name="user_gender">Female
+									<label>Gender</label><br> <input type="radio" id="male"
+										name="user_gender" value="Male" required> <label
+										for="male">Male</label> <input type="radio" id="female"
+										name="user_gender" value="Female" required> <label
+										for="female">Female</label>
 								</div>
 								<div class="form-group">
 									<textarea class="form-control" name="about" id="" rows="5"
@@ -64,7 +66,8 @@
 									<span class="fa fa-refresh fa-spin fa-2x"></span>
 									<h4>Please wait..</h4>
 								</div>
-								<button id="sumbmit-btn" type="submit" class="btn btn-primary">Submit</button>
+								<button id="sumbmit-btn" type="submit"
+									class="btn  primary-background text-white">Submit</button>
 						</form>
 					</div>
 					<div class="card-footer"></div>
@@ -102,23 +105,18 @@ $(document).ready(function() {
             data: form,
             processData: false,
             contentType: false,
-            success: function(data, textStatus, jqXHR) {
-                console.log("Response:", data);
-                $("#submit").show();
-                $("#loader").hide();
+            success: function(data) {
+                data = data.trim();
 
-                if (data.trim() === 'done') {
-                	  Swal.fire({
-                	    title: "Registered Successfully!",
-                	    text: "We are redirecting to login page",
-                	    icon: "success",
-                	    position: "center",
-                	    showConfirmButton: true,
-                	    confirmButtonText: "Go to Login",
-                	    allowOutsideClick: false
-                	  }).then(() => {
-                	    window.location.href = "login_page.jsp";
-                	  });
+                if (data === "done") {
+                    swal("Good job!", "Registration Successful", "success")
+                    .then(function() {
+                        window.location = "login_page.jsp";
+                    });
+                } else {
+                    swal("Error", "Something went wrong. User not saved.", "error");
+                }
+            });
                 	} else {
                 	  Swal.fire({
                 	    title: "Error",

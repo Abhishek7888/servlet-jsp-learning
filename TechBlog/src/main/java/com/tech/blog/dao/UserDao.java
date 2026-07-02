@@ -4,7 +4,6 @@ import java.sql.*;
 
 import com.tech.blog.entities.User;
 
-
 public class UserDao {
 
 	private Connection con;
@@ -57,12 +56,15 @@ public class UserDao {
 				user.setId(set.getInt("id"));
 				user.setEmail(set.getString("email"));
 				user.setPassword(set.getString("password"));
+				user.setGender(set.getString("gender"));
 				user.setAbout(set.getString("about"));
-				user.setProfile("profile");
+				user.setProfile(set.getString("profile"));
+				user.setRegistration_date(set.getTimestamp("registration_date"));
 			}
 
 		} catch (Exception e) {
 			// TODO: handle exception
+			e.printStackTrace();
 		}
 		return user;
 

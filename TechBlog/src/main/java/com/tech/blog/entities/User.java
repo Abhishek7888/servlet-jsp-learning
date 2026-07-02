@@ -11,10 +11,10 @@ public class User {
 	private String password;
 	private String gender;
 	private String about;
-	private Date registration_date;
+	private Timestamp registration_date;
 	private String profile;
 
-	public User(String name, String email, String password, String gender, String about, Date registration_date,
+	public User(String name, String email, String password, String gender, String about, Timestamp registration_date,
 			String profile) {
 		super();
 		this.name = name;
@@ -34,8 +34,8 @@ public class User {
 		this.profile = profile;
 	}
 
-	public User(int id, String name, String email, String password, String gender, String about,
-			Date registration_date) {
+	public User(int id, String name, String email, String password, String gender, String about, Timestamp registration_date,
+			String profile) {
 		super();
 		this.id = id;
 		this.name = name;
@@ -44,6 +44,7 @@ public class User {
 		this.gender = gender;
 		this.about = about;
 		this.registration_date = registration_date;
+		this.profile = profile;
 	}
 
 	public User(String name, String email, String password, String gender, String about) {
@@ -104,12 +105,12 @@ public class User {
 		this.about = about;
 	}
 
-	public Date getRegistration_date() {
+	public Timestamp getRegistration_date() {
 		return registration_date;
 	}
 
-	public void setRegistration_date(Date registration_date) {
-		this.registration_date = registration_date;
+	public void setRegistration_date(Timestamp timestamp) {
+		this.registration_date = timestamp;
 	}
 
 	public User() {

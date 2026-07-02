@@ -11,6 +11,7 @@ import java.io.IOException;
 
 import com.mysql.cj.Session;
 import com.tech.blog.dao.UserDao;
+import com.tech.blog.entities.Message;
 import com.tech.blog.entities.User;
 import com.tech.blog.helper.ConnectionProvider;
 
@@ -56,6 +57,10 @@ public class LoginServlet extends HttpServlet {
 		if (u == null) {
 			// login .....
 			// error
+//			out.println("Invalid details try again....");
+			Message msg = new Message("Invalid details try with Corrected one", "error", "alert-danger");
+			HttpSession s = request.getSession();
+			s.setAttribute("msg", msg);
 			response.sendRedirect("login_page.jsp");
 		} else {
 
