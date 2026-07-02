@@ -84,43 +84,92 @@ if (user == null) {
 							style="border-radius: 50%; max-width: 150px;">
 						<h5 class="modal-title mt-3" id="exampleModalLabel"><%=user.getName()%></h5>
 						<!-- details -->
-						<table class="table">
-							<tbody>
-								<tr>
-									<th scope="row">ID :</th>
-									<td><%=user.getId()%></td>
 
-								</tr>
-								<tr>
-									<th scope="row">Email :</th>
-									<td><%=user.getEmail()%></td>
+						<div id="profile-details">
+							<table class="table">
+								<tbody>
+									<tr>
+										<th scope="row">ID :</th>
+										<td><%=user.getId()%></td>
 
-								</tr>
-								<tr>
-									<th scope="row">Gender :</th>
-									<td><%=user.getGender()%></td>
+									</tr>
+									<tr>
+										<th scope="row">Email :</th>
+										<td><%=user.getEmail()%></td>
 
-								</tr>
-								<tr>
-									<th scope="row">Status :</th>
-									<td><%=user.getAbout()%></td>
+									</tr>
+									<tr>
+										<th scope="row">Gender :</th>
+										<td><%=user.getGender()%></td>
 
-								</tr>
-								<tr>
-									<th scope="row">Registerd On :</th>
-									<td><%=user.getRegistration_date()%></td>
+									</tr>
+									<tr>
+										<th scope="row">Status :</th>
+										<td><%=user.getAbout()%></td>
 
-								</tr>
-							</tbody>
-						</table>
+									</tr>
+									<tr>
+										<th scope="row">Registerd On :</th>
+										<td><%=user.getRegistration_date()%></td>
 
+									</tr>
+								</tbody>
+							</table>
+						</div>
+
+						<!-- profile edit -->
+						<div id="profile-edit" style="display: none;">
+
+							<h3 class="mt-3">Pleas Edit Your Details</h3>
+
+							<form action="EditServlet" method="POST">
+								<table class="table">
+									<tr>
+										<td>ID :</td>
+										<td><%=user.getId()%></td>
+									</tr>
+									<tr>
+									<tr>
+										<td>Name :</td>
+										<td><input type="text" class="form-control"
+											name="user_name" value="<%=user.getName()%>"></td>
+									</tr>
+									<td>Email :</td>
+									<td><input type="email" class="form-control"
+										name="user_email" value="<%=user.getEmail()%>"></td>
+									</tr>
+									<tr>
+										<td>Password :</td>
+										<td><input type="password" class="form-control"
+											name="user_password" value="<%=user.getPassword()%>"></td>
+									</tr>
+									<tr>
+										<td>Gender :</td>
+										<td><%=user.getGender()%></td>
+									</tr>
+									<tr>
+										<td>About :</td>
+										<td><textarea rows="3" class="form-control"
+												name="user_about"><%=user.getGender()%></textarea></td>
+									</tr>
+									<tr>
+										<td>Edit Pic:</td>
+										<td><input type="file" class="form-control" name="image">
+										</td>
+									</tr>
+								</table>
+								<div class="container">
+									<button type="submit" class="primary-background text-white">Save</button>
+								</div>
+							</form>
+						</div>
 					</div>
 				</div>
 				<div class="modal-footer">
 					<button type="button" class="btn btn-secondary"
 						data-dismiss="modal">Close</button>
-					<button type="button" class="btn primary-background text-white">Edit
-						changes</button>
+					<button id="edit-profile-button" type="button"
+						class="btn primary-background text-white">Edit changes</button>
 				</div>
 			</div>
 		</div>
@@ -131,5 +180,25 @@ if (user == null) {
 		src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"
 		integrity="sha384-Fy6S3B9q64WdZWQUiU+q4/2Lc9npb8tCaSX9FK7E8HnRr0Jz8D6OP9dO5Vg3Q9ct"
 		crossorigin="anonymous"></script>
+	<script>
+		$(document).ready(function() {
+
+			let editStatus = false;
+			$('#edit-profile-button').click(function() {
+				if (editStatus == false) {
+					$('#profile-details').hide()
+					$("#profile-edit").show();
+					editStatus = true;
+					$(this).text("Back")
+
+				} else {
+					$('#profile-details').show()
+					$("#profile-edit").hide();
+					editStatus = false;
+					$(this).text("Edit")
+				}
+			})
+		});
+	</script>
 </body>
 </html>
